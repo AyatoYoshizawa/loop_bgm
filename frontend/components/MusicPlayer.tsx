@@ -1,43 +1,48 @@
-import React, { useState } from 'react';
+// components/MusicPlayer.js
+import React, { useState, useEffect } from 'react';
 import { Howl } from 'howler';
 
 const MusicPlayer = () => {
-    const [isPlaying, setIsPlaying] = useState(false);
-    let sound = null;
+  const [playing, setPlaying] = useState<Boolean>(false);
+  const [howl, setHowl] = useState(null);
 
-    const handleTogglePlay = () => {
-        if (isPlaying) {
-            sound.pause();
-        } else {
-            sound.play();
-        }
-        setIsPlaying(!isPlaying);
-    };
-
-    sound = new Howl({
-        src: ['/musics/c2.mp3'],
-        html5: true,
-        loop: false,
-        autoplay: false,
-        onplay: () => {
-            setIsPlaying(true);
-        },
-        onpause: () => {
-            setIsPlaying(false);
-        },
-        onstop: () => {
-            setIsPlaying(false);
-        },
-        onloaderror: (id, error) => {
-            console.error('Sound load error:', error);
-        }
+  useEffect(() => {
+    const sound = new Howl({
+      src: ['/musics/chrono-corridor.wav'],
+      sprite: {
+        intro: [0, 11707.36],  // イントロの開始位置と長さ (ミリ秒)
+        loop: [11707.36, 77000 - 11707.36, true]  // ループの開始位置、長さ、ループするかどうか
+      }
     });
+    setHowl(sound);
 
-    return (
-        <div>
-            <button onClick={handleTogglePlay}>{isPlaying ? 'Pause' : 'Play'}</button>
-        </div>
-    );
+    return () => {
+      sound.unload();
+    };
+  }, []);
+
+  const handlePlayPause = () => {
+    if (!howl) return;
+
+    if (playing) {
+      howl.pause();
+    } else {
+      howl.play('intro');
+      howl.once('end', () => {
+        if (!playing) return;
+        howl.play('loop');
+      });
+    }
+    setPlaying(!playing);
+  };
+
+  return (
+    <div>
+      <button onClick={handlePlayPause}>
+        {playing ? 'Pause' : 'Play'}
+      </button>
+    </div>
+  );
 };
 
 export default MusicPlayer;
